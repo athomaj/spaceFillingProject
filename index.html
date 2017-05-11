@@ -1,0 +1,142 @@
+<html>
+<body>
+  Path To Explore: <input value="" id="mysearch"/>
+  <button onclick="searchClicked()">Search</button>
+  <p id="total"></p>
+  <p id="file"></p>
+  <p id="size"></p>
+  <p id="path"></p>
+</body>
+  <script src="./p5.min.js"></script>
+  <script type="text/javascript" src="data.json"></script>
+  <script>
+  var test = 0;
+  var entireSize;
+  var orientation = 0;
+  var overallData = [];
+  var mydata = JSON.parse(data);
+  var mynewdata;
+
+  function searchClicked() {
+    console.log(document.getElementById('mysearch').value);
+    getSpecificPath(mydata, document.getElementById('mysearch').value)
+    console.log(mynewdata)
+
+    clear()
+    entireSize = mynewdata.size;
+    document.getElementById('total').innerHTML ="Total Size: " + formatBytes(mynewdata.size)
+    mynewdata.drawSizeHeight = mynewdata.size * 500 / mynewdata.size;
+    mynewdata.drawSizeWidth = mynewdata.size * 500 / mynewdata.size;
+    drawRect(0, 0, mynewdata.size * 500 / mynewdata.size, mynewdata.size * 500 / mynewdata.size, mynewdata, 0)
+
+//    drawRect(0, 0, mydata.size * 500 / mydata.size, mydata.size * 500 / mydata.size, mydata, 0, document.getElementById('mysearch').value)
+  }
+
+  function formatBytes(a,b){if(0==a)return"0 Bytes";var c=1e3,d=b||2,e=["Bytes","KB","MB","GB","TB","PB","EB","ZB","YB"],f=Math.floor(Math.log(a)/Math.log(c));return parseFloat((a/Math.pow(c,f)).toFixed(d))+" "+e[f]}
+  function setup() {
+    createCanvas(600, 600);
+
+    document.getElementById('total').innerHTML ="Total Size: " + formatBytes(mydata.size)
+    entireSize = mydata.size;
+    mydata.drawSizeHeight = mydata.size * 500 / mydata.size;
+    mydata.drawSizeWidth = mydata.size * 500 / mydata.size;
+    drawRect(0, 0, mydata.size * 500 / mydata.size, mydata.size * 500 / mydata.size, mydata, 0)
+
+  }
+
+  function draw() {
+//    rect(50, 50, 80, 80);
+  }
+
+  function isInside(x, y, z1, z2, z3, z4) {
+    x1 = Math.min(z1, z3);
+    x2 = Math.max(z1, z3);
+    y1 = Math.min(z2, z4);
+    y2 = Math.max(z2, z4);
+    if ((x1 <= x ) && ( x <= x2) && (y1 <= y) && (y <= y2)) {
+        // console.log(x1 + "," + x + "," + x2);
+        // console.log(y1 + "," + y + "," + y2);
+        return true;
+    } else {
+        return false;
+    };
+};
+
+  function getSpecificPath(tree, path) {
+    if (tree.path == path) {
+      mynewdata = tree;
+    }
+    if (!tree.children)
+      return ;
+    for (var i=0; i<tree.children.length; ++i) {
+      getSpecificPath(tree.children[i], path)
+    }
+  }
+
+  function mouseClicked() {
+    for (var i=0; i<overallData.length; ++i) {
+//      console.log(overallData[i].x, overallData[i].x + );
+      if (isInside(pmouseX, pmouseY, overallData[i].x, overallData[i].y, overallData[i].x + overallData[i].width, overallData[i].y + overallData[i].height)) {
+        document.getElementById('file').innerHTML ="File: " + overallData[i].name
+        document.getElementById('size').innerHTML ="Size: " +  formatBytes(overallData[i].size)
+        document.getElementById('path').innerHTML ="Path: " +  overallData[i].path
+      }
+    }
+  }
+
+
+function drawRect(x, y, width, height, tree, reset, path) {
+  // if (reset == 0 && path == tree.path) {
+  //   console.log("herere")
+  //   tree.drawSizeHeight = tree.size * 500 / tree.size;
+  //   tree.drawSizeWidth = tree.size * 500 / tree.size;
+  //   drawRect(0, 0, tree.size * 500 / tree.size, tree.size * 500 / tree.size, tree, 1, path)
+  //   return ;
+  // }
+//  console.log(tree.path)
+  tree.drawSizeHeight = height;
+  tree.drawSizeWidth = width;
+  if (!tree.children) {
+    // if (orientation == 0) {
+    //   var c = color(255, 0, 0);  // Define color 'c'
+    // } else {
+      var c = color(random([0],[255]), random([0],[255]), random([0],[255]));  // Define color 'c'
+    // }
+
+    fill(c);  // Use color variable 'c' as fill color
+    rect(x, y, width, height);
+    overallData.push({x: x, y: y, width: width, height: height, name: tree.name, size: tree.size, path: tree.path})
+
+    // fill(255)
+    // text(tree.name, width / 2 + x - 12, height / 2 + y);
+    return ;
+  }
+  for (var i=0; i<tree.children.length; ++i) {
+    // if (tree.children[i].children) {
+    //   drawRect(x, y, tree.children[i].size * 500 / entireSize, height, tree.children[i]);
+    //   y += Math.round(tree.children[i].size* 500 / entireSize )
+    // } else {
+    if (orientation == 0) {
+      if (tree.children[i].children) {
+        orientation = 1;
+      }
+      drawRect(x, y, tree.children[i].size * tree.drawSizeWidth / tree.size , height, tree.children[i], 0, path);
+      x += tree.children[i].size * tree.drawSizeWidth / tree.size
+    } else {
+      if (tree.children[i].children) {
+        orientation = 0;
+      }
+      drawRect(x, y, width, tree.children[i].size * tree.drawSizeHeight / tree.size, tree.children[i], 0, path);
+      y += tree.children[i].size * tree.drawSizeHeight / tree.size
+    }
+    // } else {
+    //   drawRect(x, y, width, tree.children[i].size * 500 / entireSize, tree.children[i], 1);
+    //   y += Math.round(tree.children[i].size* 500 / entireSize )
+    // }
+    // }
+  }
+  orientation = (orientation == 0 ? 1 : 0)
+}
+
+</script>
+</html>
